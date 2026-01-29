@@ -1,0 +1,12 @@
+{
+  "google": {
+    "access_token": "ya29.a0AUMWg_Iqw19Wvdd0aoFz-2XRhcS1h-rjUMYTJXKtexc9ECq86C_OmQrZ_IXtc0PwCMom2uFbHYFf8B_qzW5oHDwcsARc-3KngTi2eh2igE33yGEUSAdpBKGuZCCGtjmb98oxKRWixV-A5QqGzNn32ighlNbZdcW5OP6ClaAhWcXOb9jPIoxZiC44bz47lCFwRP-amV8aCgYKAWISARUSFQHGX2Mi68lSZ-Gc5U-HaFNojVMIaA0206",
+    "expires_at": 1769711789,
+    "refresh_token": "1//03W4It6MLGvLSCgYIARAAGAMSNwF-L9IrKmw6OcfQwlETl0Yv9YuEN74aTiul1zKAXUXU9ochwg71_rf96PrPvxh6-3b6oZy9ecs"
+  },
+  "simplybook": {
+    "result": "6d4b240823cf52742a61c1eb807c534d0195da71ff2b1d099fe9b5c2a21dc4b8",
+    "id": "2",
+    "jsonrpc": "2.0"
+  }
+}

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Auth UI</title>
+
+<style>
+:root {
+  --bg: #f6f4fb;
+  --card: #ffffff;
+  --accent: #c7b9ff;
+  --accent-2: #bde7e1;
+  --accent-3: #cfe6ff;
+  --text: #2b2b2b;
+  --error: #ffb3b3;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  background: linear-gradient(135deg, var(--accent-3), var(--accent-2));
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  width: 420px;
+  background: var(--card);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.15);
+}
+
+.provider-select {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.provider {
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 14px;
+  transition: all .2s;
+}
+
+.provider img {
+  width: 48px;
+  height: 48px;
+}
+
+.provider.active {
+  background: var(--bg);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.fields {
+  display: none;
+}
+
+.fields.active {
+  display: block;
+}
+
+label {
+  font-size: 13px;
+  display: block;
+  margin-top: 12px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  margin-top: 4px;
+}
+
+button {
+  margin-top: 18px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 14px;
+  background: var(--accent);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: .9;
+}
+
+.result {
+  margin-top: 20px;
+  background: var(--bg);
+  border-radius: 16px;
+  padding: 14px;
+  font-size: 12px;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.result.error {
+  background: var(--error);
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="provider-select">
+    <div class="provider" data-provider="google">
+      <img src="icons/google.svg">
+    </div>
+    <div class="provider" data-provider="microsoft">
+      <img src="icons/microsoft.svg">
+    </div>
+    <div class="provider" data-provider="simplybook">
+      <img src="icons/simplybook.svg">
+    </div>
+  </div>
+
+  <div id="google" class="fields">
+    <label>Client ID</label>
+    <input id="g_id">
+    <label>Client Secret</label>
+    <input id="g_secret">
+    <button onclick="oauth('google')">Authenticate Google</button>
+    <button onclick="getToken('google')">Get Token (silent)</button>
+
+  </div>
+  
+
+  <div id="microsoft" class="fields">
+    <label>Client ID</label>
+    <input id="m_id">
+    <label>Client Secret</label>
+    <input id="m_secret">
+    <button onclick="oauth('microsoft')">Authenticate Microsoft</button>
+    <button onclick="getToken('microsoft')">Get Token (silent)</button>
+
+  </div>
+  
+
+  <div id="simplybook" class="fields">
+    <label>Company Login</label>
+    <input id="s_company">
+    <label>User Login</label>
+    <input id="s_user">
+    <label>Password</label>
+    <input id="s_pass" type="password">
+    <button onclick="simplybook()">Login SimplyBook</button>
+    <button onclick="getToken('simplybook')">Get Token (silent)</button>
+
+  </div>
+
+  <div id="result" class="result">Select a provider.</div>
+
+</div>
+
+<script>
+  let sessionId = localStorage.getItem("oauth_session_id");
+if (!sessionId) {
+  sessionId = crypto.randomUUID();
+  localStorage.setItem("oauth_session_id", sessionId);
+}
+const providers = document.querySelectorAll(".provider");
+const fields = document.querySelectorAll(".fields");
+const result = document.getElementById("result");
+
+providers.forEach(p => {
+  p.onclick = () => {
+    providers.forEach(x => x.classList.remove("active"));
+    fields.forEach(f => f.classList.remove("active"));
+    p.classList.add("active");
+    document.getElementById(p.dataset.provider).classList.add("active");
+    result.textContent = "Fill credentials and authenticate.";
+    result.classList.remove("error");
+  };
+});
+function getToken(provider) {
+  const url = provider === "simplybook"
+    ? "/token/simplybook"
+    : `/token/${provider}?session_id=${encodeURIComponent(sessionId)}`;
+
+  fetch(url)
+    .then(r => r.text().then(t => ({ok:r.ok, text:t})))
+    .then(res => showResult(res.text, !res.ok))
+    .catch(e => showResult(e.toString(), true));
+}
+
+
+function showResult(text, isError=false) {
+  result.textContent = text;
+  result.classList.toggle("error", isError);
+}
+
+function oauth(provider) {
+  const id = document.getElementById(provider[0] + "_id").value;
+  const secret = document.getElementById(provider[0] + "_secret").value;
+
+  window.location =
+    `/auth/${provider}?client_id=${encodeURIComponent(id)}&client_secret=${encodeURIComponent(secret)}&session_id=${encodeURIComponent(sessionId)}`;
+}
+
+function simplybook() {
+  const company = document.getElementById("s_company").value.trim();
+  const user = document.getElementById("s_user").value.trim();
+  const pass = document.getElementById("s_pass").value; // don’t trim passwords
+
+  fetch("/simplybook/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      company_login: company,
+      user_login: user,
+      password: pass
+    })
+  })
+  .then(r => r.text().then(t => ({ok:r.ok, text:t})))
+  .then(res => showResult(res.text, !res.ok))
+  .catch(e => showResult(e.toString(), true));
+}
+</script>
+
+</body>
+</html>
